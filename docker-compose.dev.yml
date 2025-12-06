@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Next.js application
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_TITLE: "Package Mirror Repository"
+        NEXT_PUBLIC_SITE_SUBTITLE: "High-speed software package mirrors"
+        NEXT_PUBLIC_README_UPDATE_INTERVAL: "30000"
+    container_name: mirror-page-nextjs
+    restart: unless-stopped
+    environment:
+      # Path to mirrors directory inside container
+      - MIRRORS_PATH=/data/mirrors
+    volumes:
+      # Mount mirrors directory (read-only)
+      - /path/to/your/mirrors:/data/mirrors:ro
+    networks:
+      - mirror-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/mirrors"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 
+      start_period: 40s
+
+  # Caddy reverse proxy and static file server
+  caddy:
+    image: caddy:alpine
+    container_name: mirror-page-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      # Caddy configuration
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Mount mirrors directory (read-only)
+      - /path/to/your/mirrors:/data/mirrors:ro
+    networks:
+      - mirror-network
+    depends_on:
+      nextjs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  mirror-network:
+    driver: bridge

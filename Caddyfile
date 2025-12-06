@@ -1,0 +1,14 @@
+:80 {
+    # Handle Next.js routes
+    @nextjs {
+        path /api/* /_next/* /favicon.svg /robots.txt /
+    }
+    reverse_proxy @nextjs nextjs:3000
+
+    # Everything else serves static mirror files
+    root * /data/mirrors
+    file_server browse {
+        hide .git
+    }
+}
+

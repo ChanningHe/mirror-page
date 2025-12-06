@@ -1,0 +1,55 @@
+services:
+  # Next.js application
+  nextjs:
+    restart: unless-stopped
+    image: channinghe/mirror-page:latest
+    environment:
+      # Site configuration
+      - NEXT_PUBLIC_SITE_TITLE=Package Mirror Repository
+      - NEXT_PUBLIC_SITE_SUBTITLE=High-speed software package mirrors
+      # Path to mirrors directory inside container
+      - MIRRORS_PATH=/data/mirrors
+      # README update interval (30 seconds)
+      - NEXT_PUBLIC_README_UPDATE_INTERVAL=30000
+    volumes:
+      # Mount mirrors directory (read-only)
+      - /path/to/your/mirrors:/data/mirrors:ro
+    networks:
+      - mirror-network
+
+  # Caddy reverse proxy and static file server
+  caddy:
+    image: caddy:alpine
+    container_name: mirror-page-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      # Mount mirrors directory (read-only)
+      - /path/to/your/mirrors:/data/mirrors:ro
+    configs:
+      - source: caddy_config
+        target: /etc/caddy/Caddyfile
+    networks:
+      - mirror-network
+
+networks:
+  mirror-network:
+    driver: bridge
+
+configs:
+  caddy_config:
+    content: |
+      :80 {
+          # Handle Next.js routes
+          @nextjs {
+              path /api/* /_next/* /favicon.svg /robots.txt /
+          }
+          reverse_proxy @nextjs nextjs:3000
+
+          # Everything else serves static mirror files
+          root * /data/mirrors
+          file_server browse {
+              hide .git
+          }
+      }
