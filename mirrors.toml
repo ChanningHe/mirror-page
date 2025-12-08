@@ -60,4 +60,4 @@ description = "A secure network that just works"
 [[mirrors]]
 name = "TrueNAS"
 path = "/truenas"
-description = "The World's #1 Open Source Storage"
+description = "The World’s Most Deployed Storage Software"

@@ -2,6 +2,11 @@
 
 A modern, static mirror station frontend built with Next.js 14, Tailwind CSS, and Shadcn UI.
 
+## Demo
+
+![Demo](./demo.png)
+[Demo Site on Vercel](https://mirror-page.vercel.app/)
+
 ## Features
 
 - ⚡ **Pure Static Generation (SSG)**: Fast, secure, and easy to deploy.
