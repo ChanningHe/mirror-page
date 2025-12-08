@@ -1,58 +1,35 @@
-# Multi-stage build for Next.js application
-FROM node:20-alpine AS base
+# ==========================================
+# Dockerfile for Path B: Build-at-Startup SSG
+# Image: channinghe/mirror-page:latest
+# ==========================================
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+FROM node:20-alpine
+
 WORKDIR /app
 
-# Copy package files
+# 1. Install System Dependencies (Caddy + Build tools)
+RUN apk add --no-cache libc6-compat caddy
+
+# 2. Install Node Dependencies
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# 3. Copy Source Code
 COPY . .
 
-# Accept build arguments for NEXT_PUBLIC_ variables
-ARG NEXT_PUBLIC_SITE_TITLE
-ARG NEXT_PUBLIC_SITE_SUBTITLE
-ARG NEXT_PUBLIC_README_UPDATE_INTERVAL
-
-# Set environment variables for build
-ENV NEXT_PUBLIC_SITE_TITLE=$NEXT_PUBLIC_SITE_TITLE
-ENV NEXT_PUBLIC_SITE_SUBTITLE=$NEXT_PUBLIC_SITE_SUBTITLE
-ENV NEXT_PUBLIC_README_UPDATE_INTERVAL=$NEXT_PUBLIC_README_UPDATE_INTERVAL
+# 4. Environment Setup
 ENV NEXT_TELEMETRY_DISABLED=1
-
-# Build the application
-RUN npm run build
-
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create a non-root user
-RUN addgroup --system --gid 5000 nodejs
-RUN adduser --system --uid 5000 nextjs
+# 5. Runtime Configuration
+# We copy the Caddyfile as a template
+COPY Caddyfile /etc/caddy/Caddyfile
 
-# Copy necessary files
-# Copy public directory if it exists
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Expose HTTP port
+EXPOSE 80
 
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Start the application
-CMD ["node", "server.js"]
+# 6. Startup Command
+# - Mount mirrors.toml at runtime via Docker volume
+# - Run 'npm run build' to generate static files based on the config
+# - Start Caddy to serve the 'out' directory
+CMD ["sh", "-c", "echo '🚀 Generating static site from config...' && npm run build && echo '✅ Build complete! Starting Caddy...' && caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"]

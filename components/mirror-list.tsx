@@ -1,76 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AlertCircle, FolderOpen, ExternalLink, Clock, Package, Database } from "lucide-react";
+import React from "react";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { FolderOpen, ExternalLink, Clock, Package, Database, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { SingleGlassIcon } from "@/components/glass-icon";
+import { Mirror } from "@/lib/static-data";
 
-interface Mirror {
-  name: string;
-  path: string;
-  lastModified: string;
+interface MirrorListProps {
+  mirrors: Mirror[];
 }
 
-interface MirrorListResponse {
-  success: boolean;
-  mirrors?: Mirror[];
-  count?: number;
-  error?: string;
-  message?: string;
-}
-
-export function MirrorList() {
-  const [mirrors, setMirrors] = useState<Mirror[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchMirrors() {
-      try {
-        const response = await fetch("/api/mirrors");
-        const data: MirrorListResponse = await response.json();
-
-        if (data.success && data.mirrors) {
-          setMirrors(data.mirrors);
-        } else {
-          setError(data.message || "Failed to load mirrors");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMirrors();
-  }, []);
-
-  if (loading) {
-    return (
-      <Card className="p-4">
-        <div className="space-y-3 max-h-[600px]">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
-          ))}
-        </div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-8">
-        <div className="flex flex-col items-center justify-center text-center">
-          <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-          <h3 className="text-lg font-semibold mb-1">Failed to Load Mirrors</h3>
-          <p className="text-sm text-muted-foreground">{error}</p>
-        </div>
-      </Card>
-    );
-  }
-
+export function MirrorList({ mirrors }: MirrorListProps) {
   if (mirrors.length === 0) {
     return (
       <Card className="p-8">
@@ -78,17 +19,21 @@ export function MirrorList() {
           <FolderOpen className="h-10 w-10 text-muted-foreground mb-3" />
           <h3 className="text-lg font-semibold mb-1">No Mirrors Found</h3>
           <p className="text-sm text-muted-foreground">
-            No mirror directories are available at this time.
+            No mirrors configured in mirrors.toml.
           </p>
         </div>
       </Card>
     );
   }
 
-  // Force native navigation
-  const handleClick = (path: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.location.href = path;
+  // Handle click for external or internal links
+  const handleClick = (path: string, isExternal?: boolean) => (e: React.MouseEvent) => {
+    // If it's an external link, let the default behavior happen (or open in new tab if desired)
+    // If it's internal, we might want to force native navigation for consistent experience with SSG
+    if (!isExternal) {
+      e.preventDefault();
+      window.location.href = path;
+    }
   };
 
   return (
@@ -113,7 +58,9 @@ export function MirrorList() {
             <motion.a
               key={mirror.name}
               href={mirror.path}
-              onClick={handleClick(mirror.path)}
+              target={mirror.is_external ? "_blank" : undefined}
+              rel={mirror.is_external ? "noopener noreferrer" : undefined}
+              onClick={handleClick(mirror.path, mirror.is_external)}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: index * 0.03 }}
@@ -133,14 +80,22 @@ export function MirrorList() {
                   <h3 className="font-semibold text-sm truncate">
                     {mirror.name}
                   </h3>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ExternalLink className={`h-3 w-3 text-muted-foreground flex-shrink-0 transition-opacity ${mirror.is_external ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} />
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                  <Clock className="h-3 w-3" />
-                  <span>
-                    {new Date(mirror.lastModified).toLocaleDateString("zh-CN")}
-                  </span>
-                </div>
+                {mirror.description && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 truncate">
+                    <Info className="h-3 w-3 flex-shrink-0" />
+                    <span>{mirror.description}</span>
+                  </div>
+                )}
+                {mirror.lastModified && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {new Date(mirror.lastModified).toLocaleDateString("zh-CN")}
+                    </span>
+                  </div>
+                )}
               </div>
             </motion.a>
           ))}
@@ -178,4 +133,3 @@ function getColorForMirror(name: string): string {
   const index = Math.abs(hash) % allColors.length;
   return allColors[index];
 }
-

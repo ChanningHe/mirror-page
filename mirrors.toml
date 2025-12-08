@@ -1,0 +1,63 @@
+# Site configuration
+[site]
+title = "Package Mirror Repository"
+subtitle = "High-speed software package mirrors"
+
+# UI configuration
+mirror_list_title = "Mirrors"
+mirror_list_subtitle = "Direct access"
+
+documentation_title = "Documentation"
+documentation_subtitle = "Important information and usage instructions"
+
+other_mirrors_title = "Other Mirror Sites"
+other_mirrors_subtitle = "Friends & Partners"
+# README file location/name
+readme = "README.md"
+
+# Other mirror sites
+[[site.other_mirrors]]
+name = "TUNA"
+url = "https://mirrors.tuna.tsinghua.edu.cn"
+description = "Tsinghua University"
+
+[[site.other_mirrors]]
+name = "USTC"
+url = "https://mirrors.ustc.edu.cn"
+description = "University of Science and Technology of China"
+
+[[site.other_mirrors]]
+name = "ZJU"
+url = "https://mirrors.zju.edu.cn"
+description = "Zhejiang University"
+
+# Mirrors
+[[mirrors]]
+name = "Debian"
+path = "/debian"
+description = "The Universal Operating System"
+
+[[mirrors]]
+name = "Ubuntu"
+path = "/ubuntu"
+description = "Enterprise Open Source and Linux"
+
+[[mirrors]]
+name = "Docker"
+path = "/docker-ce"
+description = "Empowering App Development for Developers"
+
+[[mirrors]]
+name = "Proxmox"
+path = "/proxmox"
+description = "Powerful open-source server virtualization management platform"
+
+[[mirrors]]
+name = "Tailscale"
+path = "/tailscale"
+description = "A secure network that just works"
+
+[[mirrors]]
+name = "TrueNAS"
+path = "/truenas"
+description = "The World's #1 Open Source Storage"

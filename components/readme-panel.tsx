@@ -1,106 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { config } from "@/lib/config";
 import { CodeBlock } from "@/components/code-block";
 
-interface ReadmeResponse {
-  success: boolean;
-  content?: string;
-  lastModified?: string;
-  error?: string;
-  message?: string;
+interface ReadmePanelProps {
+  content: string;
+  lastModified: string;
 }
 
-export function ReadmePanel() {
-  const [content, setContent] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastModified, setLastModified] = useState<string>("");
-
-  useEffect(() => {
-    async function fetchReadme() {
-      try {
-        const headers: HeadersInit = {};
-        if (lastModified) {
-          headers["If-Modified-Since"] = lastModified;
-        }
-
-        const response = await fetch("/api/readme", { headers });
-
-        // Handle 304 Not Modified
-        if (response.status === 304) {
-          return;
-        }
-
-        const data: ReadmeResponse = await response.json();
-
-        if (data.success && data.content) {
-          setContent(data.content);
-          if (data.lastModified) {
-            setLastModified(data.lastModified);
-          }
-          setError(null);
-        } else {
-          setError(data.message || "Failed to load README");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    // Initial fetch
-    fetchReadme();
-
-    // Set up polling for updates
-    const interval = setInterval(fetchReadme, config.readmeUpdateInterval);
-
-    return () => clearInterval(interval);
-  }, [lastModified]);
-
-  if (loading) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            README
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="w-full border-destructive/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertCircle className="h-5 w-5" />
-            Error Loading README
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+export function ReadmePanel({ content, lastModified }: ReadmePanelProps) {
   return (
     <Card className="w-full overflow-hidden flex flex-col max-h-[700px] bg-card/80 backdrop-blur-md border-2 relative shadow-xl">
       <CardHeader className="bg-gradient-to-br from-primary/15 via-primary/10 to-transparent flex-shrink-0 border-b border-primary/20 relative overflow-hidden">
@@ -184,4 +96,3 @@ export function ReadmePanel() {
     </Card>
   );
 }
-

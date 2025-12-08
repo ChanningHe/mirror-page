@@ -84,3 +84,4 @@ echo ""
 echo -e "${BLUE}Service is running at: ${BASE_URL}${NC}"
 echo ""
 
+
