@@ -4,7 +4,7 @@ A modern, static mirror station frontend built with Next.js 14, Tailwind CSS, an
 
 ## Demo
 
-![Demo](./demo.png)
+![Demo](https://raw.githubusercontent.com/ChanningHe/mirror-page/refs/heads/main/demo.png)
 [Demo Site on Vercel](https://mirror-page.vercel.app/)
 
 ## Features
